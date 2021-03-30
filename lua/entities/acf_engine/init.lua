@@ -184,7 +184,6 @@ local function SetActive(Entity, Value)
 
 		Entity:CalcMassRatio()
 
-		Entity.LastThink = ACF.CurTime
 		Entity.Torque = Entity.PeakTorque
 		Entity.FlyRPM = Entity.IdleRPM * 1.5
 
@@ -348,7 +347,6 @@ do -- Spawn and Update functions
 		Engine.Active       = false
 		Engine.Gearboxes    = {}
 		Engine.FuelTanks    = {}
-		Engine.LastThink    = 0
 		Engine.MassRatio    = 1
 		Engine.FuelUsage    = 0
 		Engine.Throttle     = 0
@@ -631,7 +629,6 @@ end
 function ENT:CalcRPM()
 	if not self.Active then return end
 
-	local DeltaTime = ACF.CurTime - self.LastThink
 	local FuelTank 	= GetNextFuelTank(self)
 
 	--calculate fuel usage
@@ -639,9 +636,9 @@ function ENT:CalcRPM()
 		self.FuelTank = FuelTank
 		self.FuelType = FuelTank.FuelType
 
-		local Consumption = self:GetConsumption(self.Throttle, self.FlyRPM) * DeltaTime
+		local Consumption = self:GetConsumption(self.Throttle, self.FlyRPM) * ACF.DeltaTime
 
-		self.FuelUsage = 60 * Consumption / DeltaTime
+		self.FuelUsage = 60 * Consumption / ACF.DeltaTime
 
 		FuelTank:Consume(Consumption)
 	elseif ACF.Gamemode ~= 1 then -- Sandbox gamemode servers will require no fuel
@@ -686,7 +683,6 @@ function ENT:CalcRPM()
 	end
 
 	self.FlyRPM = self.FlyRPM - math.min(TorqueDiff, TotalReqTq) / self.Inertia
-	self.LastThink = ACF.CurTime
 
 	if self.Sound then
 		local Pitch, Volume = GetPitchVolume(self)

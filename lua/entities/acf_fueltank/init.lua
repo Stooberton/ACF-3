@@ -140,7 +140,6 @@ do -- Spawn and Update functions
 		Tank.Owner		= Player -- MUST be stored on ent for PP
 		Tank.Engines	= {}
 		Tank.Leaking	= 0
-		Tank.LastThink	= 0
 		Tank.Inputs		= WireLib.CreateInputs(Tank, { "Active", "Refuel Duty" })
 		Tank.Outputs	= WireLib.CreateOutputs(Tank, { "Activated", "Fuel", "Capacity", "Leaking", "Entity [ENTITY]" })
 		Tank.DataStore	= ACF.GetEntityArguments("acf_fueltank")
@@ -440,12 +439,11 @@ function ENT:Think()
 
 	--refuelling
 	if self.SupplyFuel and self:CanConsume() then
-		local DeltaTime = ACF.CurTime - self.LastThink
 		local Position = self:GetPos()
 
 		for Tank in pairs(ACF.FuelTanks) do
 			if CanRefuel(self, Tank, Position:DistToSqr(Tank:GetPos())) then
-				local Exchange = math.min(DeltaTime * ACF.RefuelSpeed * ACF.FuelRate, self.Fuel, Tank.Capacity - Tank.Fuel)
+				local Exchange = math.min(ACF.DeltaTime * ACF.RefuelSpeed * ACF.FuelRate, self.Fuel, Tank.Capacity - Tank.Fuel)
 
 				if HookRun("ACF_CanRefuel", self, Tank, Exchange) == false then continue end
 
@@ -462,8 +460,6 @@ function ENT:Think()
 			end
 		end
 	end
-
-	self.LastThink = ACF.CurTime
 
 	return true
 end

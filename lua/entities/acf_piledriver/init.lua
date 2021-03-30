@@ -128,8 +128,6 @@ do -- Spawning and Updating --------------------
 			-- Bullet dies on the next tick
 			function BulletData:PreCalcFlight()
 				if self.KillTime then return end
-				if not self.DeltaTime then return end
-				if self.LastThink == ACF.CurTime then return end
 
 				self.KillTime = ACF.CurTime
 			end
@@ -201,7 +199,6 @@ do -- Spawning and Updating --------------------
 		Entity.ACF          = {}
 		Entity.Owner        = Player -- MUST be stored on ent for PP
 		Entity.RoundData    = AmmoTypes.HP()
-		Entity.LastThink    = ACF.CurTime
 		Entity.State        = "Loading"
 		Entity.Firing       = false
 		Entity.Charge       = 0
@@ -437,8 +434,7 @@ do -- Misc --------------------------------------
 		local Time = ACF.CurTime
 
 		if not self.Disabled and self.CurrentShot < self.MagSize then
-			local Delta  = Time - self.LastThink
-			local Amount = self.ChargeRate * Delta
+			local Amount = self.ChargeRate * ACF.DeltaTime
 
 			self:Consume(-Amount) -- Slowly recharging the piledriver
 
@@ -450,8 +446,6 @@ do -- Misc --------------------------------------
 		end
 
 		self:NextThink(Time)
-
-		self.LastThink = Time
 
 		return true
 	end

@@ -214,12 +214,19 @@ do -- Player loaded hook
 	end
 end
 
---Stupid workaround red added to precache timescaling.
-hook.Add("Think", "Update ACF Internal Clock", function()
-	ACF.CurTime = CurTime()
-end)
+do -- ACF clock
+	ACF.DeltaTime = 0
+	ACF.CurTime   = 0
 
-do -- Smoke/Wind -----------------------------------
+	hook.Add("Think", "ACF Clock", function()
+		local Time = CurTime()
+
+		ACF.DeltaTime = Time - ACF.CurTime
+		ACF.CurTime   = Time
+	end)
+end
+
+do -- Smoke/Wind
 	if SERVER then
 		local function msgtoconsole(_, msg)
 			print(msg)

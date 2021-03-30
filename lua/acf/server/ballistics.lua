@@ -117,14 +117,11 @@ function ACF.CalcBulletFlight(Bullet)
 		Bullet:PreCalcFlight()
 	end
 
-	local DeltaTime = ACF.CurTime - Bullet.LastThink
 	local Drag      = Bullet.Flight:GetNormalized() * (Bullet.DragCoef * Bullet.Flight:LengthSqr()) / ACF.DragDiv
 	local Accel     = Bullet.Accel or Gravity
 
-	Bullet.NextPos   = Bullet.Pos + (Bullet.Flight * ACF.Scale * DeltaTime)
-	Bullet.Flight    = Bullet.Flight + (Accel - Drag) * DeltaTime
-	Bullet.LastThink = ACF.CurTime
-	Bullet.DeltaTime = DeltaTime
+	Bullet.NextPos   = Bullet.Pos + (Bullet.Flight * ACF.Scale * ACF.DeltaTime)
+	Bullet.Flight    = Bullet.Flight + (Accel - Drag) * ACF.DeltaTime
 
 	ACF.DoBulletsFlight(Bullet)
 
@@ -175,7 +172,6 @@ function ACF.CreateBullet(BulletData)
 	end
 
 	Bullet.Index       = Index
-	Bullet.LastThink   = ACF.CurTime
 	Bullet.Fuze        = Bullet.Fuze and Bullet.Fuze + ACF.CurTime or nil -- Convert Fuze from fuze length to time of detonation
 	Bullet.Mask        = MASK_SOLID -- Note: MASK_SHOT removed for smaller projectiles as it ignores armor
 	Bullet.Ricochets   = 0
@@ -287,9 +283,8 @@ function ACF.DoBulletsFlight(Bullet)
 		if not util.IsInWorld(Bullet.Pos) then -- Outside world, just delete
 			return ACF.RemoveBullet(Bullet)
 		else
-			local DeltaTime = Bullet.DeltaTime
 			local DeltaFuze = ACF.CurTime - Bullet.Fuze
-			local Lerp = DeltaFuze / DeltaTime
+			local Lerp = DeltaFuze / ACF.DeltaTime
 
 			if not FlightRes.Hit or Lerp < FlightRes.Fraction then -- Fuze went off before running into something
 				local Pos = LerpVector(Lerp, Bullet.Pos, Bullet.NextPos)
@@ -391,13 +386,12 @@ do -- Terminal ballistics --------------------------
 
 		if Ricochet > 0 and Bullet.GroundRicos < 2 then
 			local Direction = RicochetVector(Bullet.Flight, Trace.HitNormal) + VectorRand() * 0.05
-			local DeltaTime = engine.TickInterval()
 
 			Bullet.GroundRicos = Bullet.GroundRicos + 1
 			Bullet.Flight      = Direction:GetNormalized() * Speed * ACF.Scale * Ricochet
 			Bullet.LastPos     = nil
 			Bullet.Pos         = Trace.HitPos
-			Bullet.NextPos     = Bullet.Pos + Bullet.Flight * DeltaTime
+			Bullet.NextPos     = Bullet.Pos + Bullet.Flight * ACF.DeltaTime
 
 			return "Ricochet"
 		end
@@ -546,12 +540,11 @@ do -- Terminal ballistics --------------------------
 
 		if Penetrated then
 			local Thickness = (Exit - Enter):Length() * Density * 25.4 -- RHAe of the material passed through
-			local DeltaTime = engine.TickInterval()
 
 			Bullet.Flight  = Bullet.Flight * (1 - Thickness / Pen)
 			Bullet.LastPos = nil
 			Bullet.Pos     = Exit
-			Bullet.NextPos = Exit + Bullet.Flight * ACF.Scale * DeltaTime
+			Bullet.NextPos = Exit + Bullet.Flight * ACF.Scale * ACF.DeltaTime
 
 			return "Penetrated"
 		else -- Ricochet
